@@ -1,123 +1,388 @@
 <?php
-include 'easysqlOpration.class.php';
 
-// create  object of  EasySqlOpration class
-$dbOpration = new EasySqlOpration();
+/**
+* Easy Database Opration. Just created for fun :) 
+*
+* @author		Author: Ashok kumar. (ajayashok.01@gmail.com,ashok@easyexpertsolutions.com) 
+* @facebook     https://www.facebook.com/er.ashokkashyap  
+* @version      0.1a
+*/
 
+  ///  create all function  with  all operation  for database
+  class EasySqlOpration{
+  
+  
+  
+  private $hostname;
+  private $hostuser;
+  private $hostpass;
+  private $hostdb;
+  private $dblink;
+  private  $debug;
 
-/// pass the database details for the  mysql connection
- // last parameter is for the debug database query and show into thte footer area   if true
-$dbOpration->sql_connect("localhost","root","","easymysql",true);
+  
 
+  public  $dbconnected;
+  public  $success;
+  public  $sql;
+  public  $error;
+  public  $allquery=array();
+  public  $rows;
+  public  $resutlData ;
+  
+  
+  //// connect with  database
+ public  function sql_connect($host,$user,$pass,$db,$flg=false){
+	  
+	  $this->hostname = $host;
+	  $this->username = $user; 
+	  $this->password = $pass;
+	  $this->database = $db;
+	  $this->dbconnected=false;
+	  $this->debug=$flg;
+	  
+	  $this->dblink = @mysql_connect($this->hostname,$this->username,$this->password);
+	  
+	  if (! $this->dblink)
+	  {
+	  $this->success=-1;
+	  $this->error="Query failed: " . mysql_error()." Error No:".mysql_errno();
+	  
+	  }
+	  // or die("error:".mysql_error());
+	  
+	  $db = @mysql_select_db($this->database) ;
+	  
+	  if (! $db)
+	  {
+	  $this->success=-1;
+	  $this->error="Query failed: " . mysql_error()." Error No:".mysql_errno();
+	  
+	  }
+	  
+	  $this->dbconnected=true;
+	  return $this->dblink;
 
-/// check database is connected or not
-if ($dbOpration->dbconnected==false)
-{
-	die ("connection error ");
-	
-}
-
-
-
-
-/// table name
-$tableName="userinfo";
-
-//  set table data
-$tableData['Name']='ashok kumar';
-$tableData['Email']='ajayashok.01@gmail.com';
-$tableData['Mobile']='9194669559398';
-
-
-/// run insert  function with two parameter tabledata, tablename
-$dbOpration->insert($tableData,$tableName);
-
-
-// set update information for the  given table
-$tableData['Name']='ashok kumar1';
-$tableData['Email']='ajayashok.01@gmail.com1';
-$tableData['Mobile']='91946695593981';
-
-/// run update  function with 3 parameters tabledata, tablename , Primary key
-$dbOpration->update($tableData,$tableName,2);
-
-/// check mysql error if have by last function 
-if($dbOpration->error!="" )
-{
-echo $dbOpration->error; 	
-die($dbOpration->error);
-}
-
-///  get last insert ID by last  mysql 
-$sub=$dbOpration->last_insert_id();
-
-/// run custom sql query like this
-$sql="insert INTO  userinfo (Name,Email,Mobile)  values('ajay','admin@admin.com','1234657890');";
-
-
-/// run query  function with 1 parameter sql
-$dbOpration->query($sql);
-
-
-/// check mysql error if have by last function 
-
-if($dbOpration->error!="" )
-{
-echo $dbOpration->error; 	
-die($dbOpration->error);
-}
-
-////  get single  row  with custom query and with fetch type
-
-//  1  Objeect
-//  2  Row
-//  3  Array
-
-$row=$dbOpration->single("select * from userinfo where ID='2'",1);
-
-
-// display single row data  with  given title
-$dbOpration->debug_var($row,'Single Row');
-
-///// delete table row with primary key
-
-$dbOpration->delete('userinfo',5);
-
-
-/// select all rows form given table
-$rows=$dbOpration->select($tableName);
-
-//debug your variable, string ,array,object 
-
-//////  run debug_var  with 2 parameter variable name,  title name/caption 
-$dbOpration->debug_var($rows,'All Records');
-
-// get all records for the given table name as Object
-$object=$result=$dbOpration->fetchall('userinfo','object');
-
-$dbOpration->debug_var($object,'As Object');
-
-// get all records for the given table name as Resultset
-$result=$dbOpration->fetchall('userinfo');
-
-//fetch record from  result set with given paramater like fetch array, object, row
-
-//  1  Objeect
-//  2  Row
-//  3  Array
-
-while ($row = $dbOpration->fetch($result,1))
-{
-	//echo '<hr/>';
-	//$dbOpration->debug_var($row,'in loop');
-	
 	}
 
 
 
+  // run database query
+  
+ public function query($sql){
+  
+	  $this->reset(); 
+	  $dbResult = mysql_query($sql,$this->dblink);
+	  $this->sql=$sql;
+	  $this->allquery[]=$this->sql;
+	  $this->rows=@mysql_num_rows($dbResult);
+	  
+	  if (!$dbResult)
+	  {
+	  $this->success=1;
+	  $this->error="Query failed: " . mysql_error()." Error No:".mysql_errno();
+	  
+	  }else
+	  {
+	  $this->success=0;
+	  $this->resutlData=$dbResult;
+	  }
+	  
+	  
+	  return $this->resutlData ;
+  
+  }	
+  
+  
 
-echo "<hr size='4'/>";
-echo " <h1>Mysql Query Profiler</h1> ";
-$dbOpration->sql_profoiler();
-$dbOpration->sql_close();
+
+
+  	// fetch all records of the table
+
+  
+   public function   fetchall($table,$type='resultset')
+  {
+
+	 	$selectData     = "SELECT * FROM $table ";
+	  
+	  $this->resutlData        = $this->query($selectData);  
+	
+	
+	switch($type)
+	{
+	case 'resultset':
+	  return $this->resutlData  ;
+	  break;
+	  case 'table':
+	  return $this->createTable($table);
+	  break;
+	  case 'object':
+	  return $this->select($table);
+	  break;
+	  
+	  case 'string':
+	  return $this->resutlData  ;
+	  break;
+
+	default :
+	  return $this->resutlData  ;
+	 }
+	  
+	}
+	
+	
+	
+  /// process select/view all operation
+  public function select($table,$condition=''){
+	  
+	  $selectData     = "SELECT * FROM $table $condition";
+	  
+	  $queData        = $this->query($selectData);
+	  
+	  while($fetch = mysql_fetch_object($queData)){
+	  
+	  $data[] = $fetch;
+	  
+	  }
+	  
+	  return $data;
+  
+  }
+  
+  
+  
+  /// process insert/create operation
+ public function insert($userdata,$inserttable)
+  {
+	  $userFields     = implode(",",array_keys($userdata));
+	  
+	  $userValues     = implode("','",array_values($userdata));
+	  
+	  $insert         = "INSERT INTO $inserttable ($userFields) VALUES('$userValues')";
+	  
+	  
+	  $insertQuery   =$this->query($insert);
+	  
+	  
+	  return $insertQuery ;
+  
+  }
+  
+  /// process update operation
+  
+ public function update($userdata,$table,$id){
+  
+	  $update_detail = "UPDATE $table SET ";
+	  
+	  $flag = 0;
+	  
+	  foreach($userdata as $key=>$value){
+	  
+	  if($flag){
+	  
+	  $update_detail .= ",";
+	  
+	  }
+	  
+	  $update_detail .= $key."='".$value."'";
+	  
+	  $flag = 1;
+	  
+	  }
+	  
+	  $update_detail .=" WHERE id = '$id'";
+	  
+	  return $sql_update = $this->query($update_detail);
+  
+  
+  
+  } 
+  
+  
+  /// process delete operation
+ public function delete($table,$id){
+  
+	  $delete = "DELETE FROM $table WHERE id = $id";
+	  
+	  return $delQuery = $this->query($delete);
+  
+  
+  
+  }
+  
+  
+  
+  // get last insert id 	
+ public function last_insert_id(){
+  
+ 	 return mysql_insert_id();
+  
+  }	
+
+  // set  debug pofile
+ public function set_debug($flg=false)
+ {
+  
+ 	 $this->debug=$flg;
+  
+  }	
+  
+
+  
+  /// reset error and success flag		
+ public  function reset()
+  {
+	  $this->success=-1;
+	  $this->error="";
+	  $this->resutlData=0;
+	  $tbhis->rows=0;
+	  
+  
+  }	
+  
+ 
+   ///  set name
+   
+  		public function setNames() {
+			mysql_query("SET NAMES 'utf8'"); 
+			mysql_query('SET CHARACTER SET utf8'); 
+		}
+		
+	
+		
+	function single($sql,$type=3)
+	  {
+		  
+		 $res=$this->query($sql);
+		 if ( $this->success==0)
+		 {
+			 if ($this->db_rows() >0)
+			 {
+			 $row=$this->fetch($res,$type);
+			 
+			 return $row;  
+			 }
+			 else
+			 
+			 return false;
+		 }
+		 
+	}
+  
+
+		 /// fetch data of array		
+		public function fetch($r,$type='3') 
+		{
+			switch($type)
+			{
+			case '1':
+			
+			return mysql_fetch_object($r);
+			break;
+			
+			case '2':
+			
+			return mysql_fetch_row($r);
+			break;
+			case '3':
+			
+			return mysql_fetch_array($r);
+			break;
+			
+			
+			}
+		}
+		
+		
+		 /// make secure  user input
+		public function secureInput($input) 
+		{
+			return mysql_real_escape_string(trim($input));
+		}	
+  
+  
+  
+  
+  //OPTIMIZING Table    
+    function optimize_table($table)
+    {
+        $sql= "OPTIMIZE TABLE " . $table;
+        $this->query($sql);
+    }
+
+//Analysing Table    
+    function analyze_table($table)
+    {
+        $sql = "ANALYZE TABLE ". $table;
+        $this->query($sql);
+    }
+
+//Show the "create table" command for a specific table.    
+    function show_create_table($table)
+    {
+        $sql= "SHOW CREATE TABLE ".$table;
+        $res = $this->query($sql);
+        $structure = $this->fetch_array($res);
+        return $structure['Create Table'];
+    } 
+  
+  
+  
+	public function db_rows()
+	{
+				
+		return $this->rows;	
+	}  
+  
+    // close database connection
+ public function sql_close()
+  {
+	  mysql_close($this->dblink);
+	  $this->dblink=NULL;
+	  $this->reset();
+  }
+  
+public function debug_var($obj,$str="Debug")
+{
+		echo "<h2>$str</h2>";
+		if (is_array($obj) or is_object($obj))
+		{
+			echo"<pre> ";
+			print_r($obj);
+			echo "</pre>";
+		}
+		else
+		{
+			echo $obj;
+		}
+}
+
+  
+ 	public function  sql_profoiler()
+ 	{
+
+		if ($this->debug)
+		{
+			$str="<div id='profile' class='debug'>";
+			$str.="<h3>Here is all your page Querys</h3>";
+			foreach($this->allquery as $sql)
+			{
+				$str.="<div id='line'>$sql</div>";
+			}	
+			echo $str."</div>"; 
+		}
+		
+			  
+	}
+    
+
+
+
+public function free_result($result)
+{
+    mysql_free_result($result);   
+}
+
+}
+
 ?>
