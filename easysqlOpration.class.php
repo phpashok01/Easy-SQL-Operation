@@ -1,11 +1,12 @@
 <?php
 
 /**
-* Easy Database Opration. Just created for fun :) 
-*
-* @author		Author: Ashok kumar. (ajayashok.01@gmail.com,ashok@easyexpertsolutions.com) 
-* @facebook     https://www.facebook.com/er.ashokkashyap  
-* @version      0.1a
+* Easy Database Opration. this  class is handle approx all the database operation with the table, i have Just created for fun :) 
+* @author		Ashok kashyap 
+* @authoremail        ajayashok.01@gmail.com,ashok@yesweexpert.com
+* @authorwebsite      http://yesweexpert.com
+* @facebook          https://www.facebook.com/er.ashokkashyap, https://www.facebook.com/yesweexpert 
+* @version          1.1
 */
 
   ///  create all function  with  all operation  for database
